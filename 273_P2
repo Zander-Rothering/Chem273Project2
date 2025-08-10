@@ -1,0 +1,125 @@
+
+"""
+Yejin Yang
+
+E.coli Chemotaxis Simulation (Gradient-based Biased Random Walk)
+Outline:
+#0. set food source location, ecoli's location
+#1. concentration field (gaussian from Fick's 2nd law)
+#   concentration gradient calculation
+#2. tumble phase - biased random walk, during 4*dt
+#                 -> concentration gradient to get favorable direction
+#3. run phase with learning rate
+#4. repeat #2 and #3
+
+
+didn't do mutiple # of e.coli yet
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+#0. setting up
+
+#1. Concentration field (Gaussian)
+# C(x,y) = Cmax * exp(-((x-x0)^2 + (y-y0)^2)/(2*sigma^2))
+def conc_field_gradient(field_size = 100, food_pos=(50,50), Cmax=100, s=1):
+    fx, fy = food_pos
+    
+    x = np.arange(field_size)
+    y = np.arange(field_size)
+    X, Y = np.meshgrid(x, y, indexing='ij')
+    
+    C = Cmax * np.exp(-((X - fx)**2 + (Y - fy)**2) / (2 * s**2))
+    dCdx, dCdy  = np.gradient(C)
+    return fx, fy, C, dCdx, dCdy
+
+
+
+#2. Movement of E.Coli
+#  tumple phase: during 4*dt, move +-1 randomly
+#  run phase: after tumple, run eps distance
+def tumb_and_run(tumble_steps=4, ecoli_x=40, ecoli_y=40, Niter=200, eps=0.6, 
+                 field_size = 100, food_pos=(50,50), Cmax=100, s=5):
+    len_traj = Niter * (tumble_steps + 1) + 1
+    ecoli_traj = np.zeros((len_traj, 2))
+    idx = 0 #added
+    ecoli_traj[0] = [ecoli_x, ecoli_y]
+    
+    #get conc gradient 
+    fx, fy, C, dCdx, dCdy = conc_field_gradient(field_size, food_pos, Cmax, s)
+    
+    #added
+    def wrap_xy(x, y):  # 경계: 원하면 clip으로 교체 가능
+        return x % field_size, y % field_size
+    
+    for n in range(Niter):
+        if not n%4:
+            for i in range(tumble_steps):
+                dx = np.random.choice([-1, 1])
+                dy = np.random.choice([-1, 1])
+                
+                ecoli_x, ecoli_y = wrap_xy(ecoli_x + dx, ecoli_y + dy)
+                #ecoli_x += dx 
+                #ecoli_y += dy
+                idx +=1 #added
+                ecoli_traj[idx] = [ecoli_x, ecoli_y]
+        else:
+            #ecoli_x, ecoli_y = ecoli_traj[-1]
+            ix = int(round(ecoli_x))
+            iy = int(round(ecoli_y))
+            #added
+            gx = float(dCdx[ix, iy])
+            gy = float(dCdy[ix, iy])
+            #norm = (gx**2 + gy**2) ** 0.5 + 1e-12 #why
+            #ux, uy = gx / norm, gy / norm
+            #ecoli_x, ecoli_y = wrap_xy(ecoli_x + eps * ux, ecoli_y + eps * uy)
+            
+            ecoli_x, ecoli_y = wrap_xy(ecoli_x + eps * gx, ecoli_y + eps * gy)
+            #gx = dCdx[ix, iy]
+            #gy = dCdy[ix, iy]
+            
+            #ecoli_x += int(round(eps * gx)) #should be integer
+            #ecoli_y += int(round(eps * gy))
+            idx+=1
+            ecoli_traj[idx] = [ecoli_x, ecoli_y]
+    
+    #plot
+    plt.imshow(C.T, origin='lower', cmap='gray')
+    xp, yp = ecoli_traj[:,0], ecoli_traj[:,1] #xp is x value for plotting
+    plt.plot(xp, yp, color='w', linewidth=2)
+    plt.scatter(xp, yp, color='w', marker='o', s=20)
+
+    plt.plot(fx, fy, 's', mfc='red', mec='white', mew=0.8, ms=7, label='Food')
+    #plt.xlim(40,60)
+    #plt.ylim(40,60)
+    plt.show()
+    
+        
+    #check initial condition
+    rx_ec_feel = ecoli_x - fx
+    ry_ec_feel = ecoli_y - fy
+    r_ec_feel = np.sqrt(rx_ec_feel**2 + ry_ec_feel**2)
+    #get concentration that ecoli feels at current position
+    C_ec_feel = Cmax * np.exp(-1 * r_ec_feel**2 / s**2)
+    #get conc gradient that ecoli feels at current position
+    dCdx_ec_feel = -1 * C_ec_feel * rx_ec_feel / s**2
+    dCdy_ec_feel = -1 * C_ec_feel * ry_ec_feel / s**2
+    
+    print('r, C: ' + str(r_ec_feel) + " ," + str(C_ec_feel))
+    print('gradient: ' + str(dCdx_ec_feel) + ", " +str(dCdy_ec_feel))
+    
+    
+    
+tumb_and_run()
+
+
+
+"""
+class __init__(self):
+    self.
+    
+    def run(self, Niter=100):
+        tumb_and_run()
+        
+"""
