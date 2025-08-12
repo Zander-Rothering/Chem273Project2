@@ -1,0 +1,80 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import random
+
+
+def concentration_field(x, y):
+    return np.exp(-(x**2 + y**2) / 100)
+
+def compute_gradient(x, y, h=1e-3):
+    dcdx = (concentration_field(x + h, y) - concentration_field(x - h, y)) / (2 * h)
+    dcdy = (concentration_field(x, y + h) - concentration_field(x, y - h)) / (2 * h)
+    return dcdx, dcdy
+
+def simulate_ecoli_motion(N=10, steps=300, spawn_x = (-100, 100), spawn_y = (-100, 100)):
+    class EColi:
+        def __init__(self, x, y):
+            self.x = x
+            self.y = y
+            self.x_path = [x]
+            self.y_path = [y]
+
+        def tumble(self):
+            dx, dy = random.choice([(1, 0), (-1, 0), (0, 1), (0, -1)])
+            self.x += dx
+            self.y += dy
+            self.x_path.append(self.x)
+            self.y_path.append(self.y)
+
+        def run(self):
+            dx, dy = compute_gradient(self.x, self.y)
+            norm = np.sqrt(dx**2 + dy**2) + 1e-8
+            self.x += dx / norm
+            self.y += dy / norm
+            self.x_path.append(self.x)
+            self.y_path.append(self.y)
+
+    # Initialize E. coli:
+
+    ecoli_list = [
+        EColi(random.uniform(*spawn_x), random.uniform(*spawn_y)) for _ in range(N)
+    ]
+
+    # Monter-Carlo Simulation for motion:
+
+    for _ in range(0, steps, 5):
+        for e in ecoli_list:
+            for _ in range(4):
+                e.tumble()
+            e.run()
+
+    # Creating concentration background for plotting:
+
+
+    x = np.linspace(-60, 60, 150)
+    y = np.linspace(-60, 60, 150)
+    X, Y = np.meshgrid(x, y)
+    Z = concentration_field(X, Y)
+
+
+
+
+    # Plot:
+    
+    if N <= 100:
+        for e in ecoli_list:
+            plt.plot(e.x_path, e.y_path, linewidth=0.6, alpha=0.7)
+            
+    else:
+        final_positions = np.array([[e.x_path[-1], e.y_path[-1]] for e in ecoli_list])
+        plt.hist2d(final_positions[:, 0], final_positions[:, 1])
+
+    plt.title(f"{N} E. coli Moving Toward Higher Concentration (Center)")
+    #plt.axis('equal')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+
+# Run for N = 10, 100, and 1000
+simulate_ecoli_motion(N = 10)
