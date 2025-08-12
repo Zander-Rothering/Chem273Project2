@@ -392,7 +392,7 @@ def create_population_comparison_plots(results):
     plt.tight_layout()
     plt.show()
 
-# Main execution and demonstration fo package
+# Main execution and demonstration for package
 if __name__ == "__main__":
     # Quick demonstration with single population
     sim = ChemotaxisSimulation(n_bacteria=100)
@@ -409,7 +409,7 @@ if __name__ == "__main__":
     # Run simulation
     sim.run_simulation(300, snapshot_interval=60)
     
-    # Show final state
+    # Show final states
     sim.plot_bacteria_positions(axes[1, 0], show_trails=True)
     sim.plot_radial_distribution(axes[1, 1])
     axes[1, 0].set_title('Final Distribution with Trails')
