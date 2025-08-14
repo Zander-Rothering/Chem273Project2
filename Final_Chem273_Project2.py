@@ -87,7 +87,7 @@ class EcoliBacterium:
                         dy = self.history_y[-1] - self.history_y[-2]
                         self.run_direction = np.arctan2(dy, dx)
                 self.tumble_steps = 0
-        else:  # implement running
+        else:  # running
             if gradient <= 0 or random.random() < 0.1:  # Switch to tumble if gradient decreases
                 self.state = 'tumble'
                 self.tumble_steps = 0
@@ -214,21 +214,34 @@ class ChemotaxisSimulation:
         ax.set_ylim(-self.grid_size, self.grid_size)
         return ax
     
-    def plot_radial_distribution(self, ax=None, bins=30):
-        """Plot radial distribution histogram"""
+    def plot_radial_frequency_evolution(self, ax=None, bins=20):
+        """Plot radial frequency distribution for different time points"""
         if ax is None:
-            fig, ax = plt.subplots(figsize=(8, 6))
+            fig, ax = plt.subplots(figsize=(10, 6))
         
-        x_pos, y_pos = self.get_positions()
-        distances = np.sqrt(x_pos**2 + y_pos**2)
+        # Define colors for different time points
+        colors = plt.cm.viridis(np.linspace(0, 1, len(self.position_snapshots)))
         
-        ax.hist(distances, bins=bins, alpha=0.7, density=True, 
-               label=f'N={self.n_bacteria}, t={self.time_steps}', edgecolor='black')
+        # Calculate bin edges
+        bin_edges = np.linspace(0, self.grid_size, bins + 1)
+        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+        
+        for i, ((x_pos, y_pos), time) in enumerate(zip(self.position_snapshots, self.snapshot_times)):
+            distances = np.sqrt(x_pos**2 + y_pos**2)
+            
+            # Calculate frequency (counts) in each bin
+            counts, _ = np.histogram(distances, bins=bin_edges)
+            
+            # Plot as line plot
+            ax.plot(bin_centers, counts, color=colors[i], linewidth=2, 
+                   marker='o', markersize=4, label=f't={time}')
+        
         ax.set_xlabel('Distance from center')
-        ax.set_ylabel('Probability density')
-        ax.set_title(f'Radial Distribution (N={self.n_bacteria})')
-        ax.legend()
+        ax.set_ylabel('Frequency (Number of bacteria)')
+        ax.set_title(f'Radial Frequency Distribution Over Time (N={self.n_bacteria})')
+        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
         ax.grid(True, alpha=0.3)
+        ax.set_xlim(0, self.grid_size)
         return ax
     
     def plot_time_evolution(self, ax=None):
@@ -357,16 +370,16 @@ def create_population_comparison_plots(results):
     plt.tight_layout()
     plt.show()
     
-    # 3. Radial Distribution Histograms
+    # 3. Radial Frequency Evolution (MAIN FEATURE)
     fig, axes = plt.subplots(3, 3, figsize=(18, 15))
     for i, pop_size in enumerate(populations):
         for j, grad_type in enumerate(gradient_types):
             ax = axes[i, j]
             sim = results[pop_size][grad_type]['simulation']
-            sim.plot_radial_distribution(ax)
+            sim.plot_radial_frequency_evolution(ax)
             ax.set_title(f'N={pop_size}, {grad_type} Gradient')
     
-    plt.suptitle('Radial Distribution Profiles', fontsize=16)
+    plt.suptitle('Radial Frequency Evolution Over Time', fontsize=16)
     plt.tight_layout()
     plt.show()
     
@@ -392,7 +405,7 @@ def create_population_comparison_plots(results):
     plt.tight_layout()
     plt.show()
 
-# Main execution and demonstration for package
+# Main execution and demonstration
 if __name__ == "__main__":
     # Quick demonstration with single population
     sim = ChemotaxisSimulation(n_bacteria=100)
@@ -409,11 +422,11 @@ if __name__ == "__main__":
     # Run simulation
     sim.run_simulation(300, snapshot_interval=60)
     
-    # Show final states
+    # Show final state
     sim.plot_bacteria_positions(axes[1, 0], show_trails=True)
-    sim.plot_radial_distribution(axes[1, 1])
+    sim.plot_radial_frequency_evolution(axes[1, 1])  # KEY PLOT
     axes[1, 0].set_title('Final Distribution with Trails')
-    axes[1, 1].set_title('Radial Distribution')
+    axes[1, 1].set_title('Radial Frequency Evolution')
     
     plt.suptitle('Quick Demonstration - Radial Chemotaxis', fontsize=14)
     plt.tight_layout()
