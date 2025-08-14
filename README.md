@@ -1,3 +1,3 @@
 # Chem273Project2
 See file names "Final_Chem273_Project2.0.py" and "Final_Chem273_Project2.1.py" for final code. File name "Final_Chem273_Project2.0.py" produces histograms of the bacterial movement towards the center over time while "Final_Chem273_Project2.1.py" plots the same information using line plots. Both codes produce an example gradient, trajectories of bacteria showing mvoment towards the nutrient source, a single bacterial trajectory towards the nutrient source, and a plot of the distribution of bacterial over time.\
-For previous commits see Draft_Code folder
+\For previous commits see Draft_Code folder
