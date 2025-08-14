@@ -1,3 +1,22 @@
+"""
+
+CHEM 273_Project 2
+
+Motion Simulation of E.Coli 
+in Concentration Gradient
+-Python Code
+
+-Group 6-
+David Houshangi
+Paul Rubrio
+Yejin Yang
+Christian Fernandez
+Zander Rothering
+
+
+"""
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
